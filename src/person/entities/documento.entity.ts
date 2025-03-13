@@ -22,5 +22,5 @@ export class DocumentGeneric {
   createdAt: Date;
 
   @OneToOne(() => PersonDocumento, (personDocument) => personDocument.document)
-  personDocument: PersonDocumento;
+  personDocument?: PersonDocumento;
 }

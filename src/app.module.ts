@@ -7,11 +7,18 @@ import { AuthModule } from './auth/auth.module';
 import { PersonModule } from './person/person.module';
 import { UserModule } from './user/user.module';
 import { CountryModule } from './country/country.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
+console.log(join(__dirname, '..', 'upload'))
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
     }),
     DatabaseModule,
     AuthModule,

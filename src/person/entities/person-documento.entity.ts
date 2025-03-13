@@ -23,5 +23,5 @@ export class PersonDocumento {
   document: DocumentGeneric;
 
   @ManyToOne(() => Person, (person) => person.personDocument)
-  person: Person;
+  person?: Person;
 }

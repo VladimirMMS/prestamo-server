@@ -1,5 +1,12 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Province } from 'src/country/entities/province.entity';
+import { Person } from './person.entity';
 
 @Entity('personAddress')
 export class PersonAddress {
@@ -11,4 +18,7 @@ export class PersonAddress {
 
   @ManyToOne(() => Province, (province) => province.personAddress)
   province: Province;
+
+  @OneToOne(() => Person, (person) => person.personAddress)
+  person: Person;
 }
