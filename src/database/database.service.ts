@@ -17,7 +17,7 @@ export const DatabaseProviders: DynamicModule = TypeOrmModule.forRootAsync({
       database: config.get('DB_NAME'),
       synchronize: true,
       autoLoadEntities: isDevelopment,
-      entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+      entities: [__dirname + '/../**/*.entity{.ts,.js}'],
       migrations: [join(__dirname + 'src/database/migrations/*{.ts,.js}')],
       schema: 'dev',
     } as TypeOrmModuleOptions;

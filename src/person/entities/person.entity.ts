@@ -21,7 +21,7 @@ export class Person {
   @Column()
   lastNames: string;
 
-  @Column()
+  @Column({ unique: true })
   cedula: string;
 
   @Column()
@@ -34,7 +34,7 @@ export class Person {
   updatedAt: Date;
 
   @OneToMany(() => PersonDocumento, (personDocument) => personDocument.person)
-  personDocument?: PersonDocumento[];
+  personDocument: PersonDocumento[];
 
   @OneToOne(() => User, (user) => user.person)
   user?: User;

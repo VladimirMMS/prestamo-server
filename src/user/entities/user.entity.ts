@@ -1,9 +1,12 @@
 import { ValidRoles } from 'src/auth/interfaces/valid-roles';
+import { BankAccount } from 'src/cuenta-banco/entities/cuenta-banco.entity';
 import { Person } from 'src/person/entities/person.entity';
+import { LoanRequest } from 'src/solicitud/entities/solicitud.entity';
 import {
   Column,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -34,4 +37,10 @@ export class User {
   @OneToOne(() => Person, (person) => person.user)
   @JoinColumn({ name: 'personId' })
   person: Person;
+
+  @OneToMany(() => BankAccount, (bankAccount) => bankAccount.user)
+  bankAccounts: BankAccount[];
+
+  @OneToMany(() => LoanRequest, (loan) => loan.user)
+  loanRequest: LoanRequest[];
 }

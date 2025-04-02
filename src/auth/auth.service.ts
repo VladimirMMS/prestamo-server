@@ -58,8 +58,16 @@ export class AuthService {
       where: { email: signupDto.correo },
     });
 
+    const existingPerson = await this.personRepository.findOne({
+      where: { cedula: signupDto.cedula },
+    });
+
+    if (existingPerson) {
+      throw new BadRequestException('La cedula ya está en uso');
+    }
+
     if (existingUser) {
-      throw new BadRequestException('El usuario ya está registrado');
+      throw new BadRequestException('El correo ya está en uso');
     }
 
     const province = await this.findProvince(signupDto.provinciaId);
@@ -169,7 +177,7 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({
       where: { email },
-      select: { email: true, password: true, id: true },
+      select: { email: true, password: true, id: true, role: true },
     });
 
     if (!user)
@@ -178,6 +186,7 @@ export class AuthService {
     if (!bcrypt.compareSync(password, user.password))
       throw new UnauthorizedException('Credentials are not valid (password)');
 
+    delete user.password;
     return {
       ...user,
       token: this.getJwt({ id: user.id }),
