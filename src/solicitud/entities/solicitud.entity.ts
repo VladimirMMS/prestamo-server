@@ -13,6 +13,8 @@ import {
 import { Status } from '../interfaces/solicitud-status.interface';
 import { Frecuencia } from '../interfaces/solicitud-frecuencia.interface';
 import { MotivosRechazo } from './motivos.entity';
+import { Loan } from 'src/prestamo/entities/prestamo.entity';
+import { LoanRequestUser } from './solicitud-usuario.entity';
 
 @Entity('loanRequests')
 export class LoanRequest {
@@ -30,7 +32,7 @@ export class LoanRequest {
     enum: Frecuencia,
     default: Frecuencia.mensual,
   })
-  paymentFrequency: string;
+  paymentFrequency: Frecuencia;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   totalLoanAmount: number;
@@ -57,10 +59,19 @@ export class LoanRequest {
   @ManyToOne(() => User, (user) => user.loanRequest, { nullable: false })
   user: User;
 
-  @OneToOne(() => BankAccount, (bankAccount) => bankAccount.loan)
-  @JoinColumn({ name: 'bankAccountId', referencedColumnName: 'id' })
+  @ManyToOne(() => BankAccount, (bankAccount) => bankAccount.loan)
   bankAccount: BankAccount;
 
   @OneToMany(() => MotivosRechazo, (motivo) => motivo.solicitud)
   motivos: MotivosRechazo[];
+
+  @OneToOne(() => Loan, { nullable: false })
+  loanRequest: Loan;
+
+  @OneToMany(
+    () => LoanRequestUser,
+    (loanRequestUser) => loanRequestUser.loanRequest,
+    { nullable: true },
+  )
+  loanRequestUser?: LoanRequestUser[];
 }

@@ -11,6 +11,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { CuentaBancoModule } from './cuenta-banco/cuenta-banco.module';
 import { SolicitudModule } from './solicitud/solicitud.module';
+import { PrestamoModule } from './prestamo/prestamo.module';
 
 console.log(join(__dirname, '..', 'upload'))
 @Module({
@@ -29,6 +30,7 @@ console.log(join(__dirname, '..', 'upload'))
     CountryModule,
     CuentaBancoModule,
     SolicitudModule,
+    PrestamoModule,
   ],
   controllers: [AppController],
   providers: [AppService],

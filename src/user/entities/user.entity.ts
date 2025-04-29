@@ -1,6 +1,8 @@
 import { ValidRoles } from 'src/auth/interfaces/valid-roles';
 import { BankAccount } from 'src/cuenta-banco/entities/cuenta-banco.entity';
 import { Person } from 'src/person/entities/person.entity';
+import { Loan } from 'src/prestamo/entities/prestamo.entity';
+import { LoanRequestUser } from 'src/solicitud/entities/solicitud-usuario.entity';
 import { LoanRequest } from 'src/solicitud/entities/solicitud.entity';
 import {
   Column,
@@ -39,8 +41,17 @@ export class User {
   person: Person;
 
   @OneToMany(() => BankAccount, (bankAccount) => bankAccount.user)
-  bankAccounts: BankAccount[];
+  bankAccounts?: BankAccount[];
 
   @OneToMany(() => LoanRequest, (loan) => loan.user)
-  loanRequest: LoanRequest[];
+  loanRequest?: LoanRequest[];
+
+  @OneToMany(() => Loan, (loan) => loan.user)
+  loan?: Loan[];
+
+  @OneToMany(() => LoanRequestUser, (loanRequest) => loanRequest.user)
+  loanRequestAttend?: LoanRequest[];
+
+  @Column({ nullable: true })
+  profileImage?: string;
 }

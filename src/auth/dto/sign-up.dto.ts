@@ -34,4 +34,12 @@ export class SignupDto {
 
   @IsNotEmpty()
   provinciaId: number;
+
+  @IsNotEmpty()
+  @IsString()
+  tipoDocumento: string;
+
+  @IsNotEmpty()
+  @IsString()
+  telefono: string;
 }

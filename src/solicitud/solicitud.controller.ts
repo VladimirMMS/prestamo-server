@@ -12,6 +12,11 @@ export class SolicitudController {
     return this.solicitudService.createLoanRequest(createSolicitudDto);
   }
 
+  @Patch('enviar/solicitud/:id')
+  enviarSolicitud(@Param('id') id: string) {
+    return this.solicitudService.enviarSolicitud(+id);
+  }
+
   @Get('loan/pending')
   findAll() {
     return this.solicitudService.getLoansPeding();

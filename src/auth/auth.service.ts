@@ -125,13 +125,16 @@ export class AuthService {
       tipo: 1,
       createdAt: new Date(),
       route: fileUrl,
-      name: 'Cedula',
+      name: 'documento',
     });
     documento = await this.documentGenericRepository.save(documento);
 
     let newPersonDocumento = this.personDocumentoRepository.create({
       document: documento,
-      documentType: DocumentTypeEnum.CEDULA,
+      documentType:
+        signupDto.tipoDocumento === 'cedula'
+          ? DocumentTypeEnum.CEDULA
+          : DocumentTypeEnum.PASAPORTE,
     });
 
     newPersonDocumento = await this.personDocumentoRepository.save(
@@ -147,6 +150,7 @@ export class AuthService {
       fechaNacimiento: new Date(fechaNacimiento),
       personAddress: newPersonAddress,
       personDocument: [newPersonDocumento],
+      telefono: signupDto.telefono,
     });
 
     await this.personRepository.save(newPerson);
@@ -177,7 +181,13 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({
       where: { email },
-      select: { email: true, password: true, id: true, role: true },
+      select: {
+        email: true,
+        password: true,
+        id: true,
+        role: true,
+        profileImage: true,
+      },
     });
 
     if (!user)
@@ -196,5 +206,63 @@ export class AuthService {
   private getJwt(payload: JwtPayload) {
     const token = this.jwtService.sign(payload);
     return token;
+  }
+
+  async changeProfile(
+    userId: number,
+    files: {
+      profilePic?: Multer.File;
+      idDocument?: Multer.File;
+    },
+  ) {
+    const { profilePic, idDocument } = files;
+
+    if (!profilePic || !idDocument) {
+      throw new BadRequestException('Faltan archivos adjuntos');
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: [
+        'person',
+        'person.personDocument',
+        'person.personDocument.document',
+      ],
+    });
+
+    if (!user) {
+      throw new BadRequestException('Usuario no encontrado');
+    }
+
+    const personDoc = user.person?.personDocument?.[0];
+    if (!personDoc) {
+      throw new BadRequestException(
+        'El usuario no tiene documentos registrados',
+      );
+    }
+
+    const profilePicUrl = this.generateFileUrl(profilePic.filename);
+    const idDocumentUrl = this.generateFileUrl(idDocument.filename);
+
+    user.profileImage = profilePicUrl;
+    personDoc.document.route = idDocumentUrl;
+
+    await this.userRepository.save(user);
+    await this.personDocumentoRepository.save(personDoc);
+    await this.documentGenericRepository.save(personDoc.document);
+
+    return {
+      message: 'Perfil actualizado exitosamente',
+      user,
+    };
+  }
+
+  async checkAuthStatus(user: User) {
+    if (user.id) {
+      return {
+        ...user,
+        token: this.getJwt({ id: user.id }),
+      };
+    }
   }
 }

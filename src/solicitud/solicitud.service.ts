@@ -6,6 +6,11 @@ import { Repository } from 'typeorm';
 import { Status } from './interfaces/solicitud-status.interface';
 import { UpdateLoanRequestDto } from './dto/update-solicitud.dto';
 import { MotivosRechazo } from './entities/motivos.entity';
+import { PrestamoService } from 'src/prestamo/prestamo.service';
+import { LoanRequestUser } from './entities/solicitud-usuario.entity';
+import { Loan } from 'src/prestamo/entities/prestamo.entity';
+import { PaymentHistory } from 'src/prestamo/entities/historial.entity';
+import Stripe from 'stripe';
 
 @Injectable()
 export class SolicitudService {
@@ -15,27 +20,69 @@ export class SolicitudService {
 
     @InjectRepository(MotivosRechazo)
     private readonly motivosRechazoRepository: Repository<MotivosRechazo>,
+
+    private readonly prestamoService: PrestamoService,
+
+    @InjectRepository(LoanRequestUser)
+    private readonly loanRequestUserRepository: Repository<LoanRequestUser>,
+
+    @InjectRepository(Loan)
+    private readonly loanRepository: Repository<Loan>,
+
+    @InjectRepository(PaymentHistory)
+    private readonly paymentRepository: Repository<PaymentHistory>,
   ) {}
 
   async createLoanRequest(payload: CreateLoanRequestDto): Promise<LoanRequest> {
-    const existingRequest = await this.loanRequestRepository.findOne({
-      where: { user: { id: payload.userId }, status: Status.Pendiente },
-    });
+    try {
+      if (payload.id) {
+        // Editar solicitud existente
+        const existing = await this.loanRequestRepository.findOne({
+          where: { id: payload.id },
+        });
 
-    if (existingRequest) {
-      throw new BadRequestException(
-        'El usuario ya tiene una solicitud pendiente.',
-      );
+        if (!existing) {
+          throw new BadRequestException('La solicitud no existe.');
+        }
+
+        const updated = this.loanRequestRepository.merge(existing, {
+          amountRequested: payload.amountRequested,
+          termInMonths: payload.termInMonths,
+          paymentFrequency: payload.paymentFrequency,
+          totalLoanAmount: payload.totalLoanAmount,
+          installments: payload.installments,
+          installmentAmount: payload.installmentAmount,
+          interestRate: payload.interestRate,
+          bankAccount: { id: payload.bankAccountId },
+          status: Status.Pendiente,
+        });
+
+        return await this.loanRequestRepository.save(updated);
+      }
+
+      const existingRequest = await this.loanRequestRepository.findOne({
+        where: { user: { id: payload.userId }, status: Status.Pendiente },
+      });
+
+      if (existingRequest) {
+        throw new BadRequestException(
+          'El usuario ya tiene una solicitud pendiente.',
+        );
+      }
+
+      const loanRequest = this.loanRequestRepository.create({
+        ...payload,
+        user: { id: payload.userId },
+        bankAccount: { id: payload.bankAccountId },
+        loanRequestUser: null,
+        status: Status.Pendiente,
+      });
+
+      return await this.loanRequestRepository.save(loanRequest);
+    } catch (error) {
+      console.error(error);
+      throw new BadRequestException('Error al crear la solicitud');
     }
-
-    const loanRequest = this.loanRequestRepository.create({
-      ...payload,
-      user: { id: payload.userId },
-      bankAccount: { id: payload.bankAccountId },
-      status: Status.Pendiente,
-    });
-
-    return await this.loanRequestRepository.save(loanRequest);
   }
 
   async findSolicitudesPrestamos(userId: number) {
@@ -45,7 +92,7 @@ export class SolicitudService {
         relations: ['bankAccount', 'motivos'],
       });
       const loansAdapted = loans.map((loan) => {
-        const motivos = loan.motivos.sort((a, b) => {
+        const motivos = loan?.motivos?.sort((a, b) => {
           return b.createdAt.getTime() - a.createdAt.getTime();
         });
         return {
@@ -58,7 +105,7 @@ export class SolicitudService {
           fecha: loan.createdAt,
           tasa: loan.interestRate,
           cuotas: loan.installmentAmount,
-          motivoRechazo: motivos[0].description || '',
+          motivoRechazo: motivos[0]?.description || '',
         };
       });
       return loansAdapted;
@@ -135,6 +182,8 @@ export class SolicitudService {
         throw new BadRequestException('Préstamo no encontrado');
       }
 
+      let loanRquestUser: LoanRequestUser;
+
       if (updateLoanRequest.status === Status.Rechazado) {
         loanRequest.status = Status.Rechazado;
 
@@ -144,10 +193,26 @@ export class SolicitudService {
           createdAt: new Date(),
           solicitud: loanRequest,
         });
-
+        loanRquestUser = this.loanRequestUserRepository.create({
+          user: { id: updateLoanRequest.userAdminId },
+          loanRequest,
+          fechaSolicitud: new Date(),
+        });
+        await this.loanRequestUserRepository.save(loanRquestUser);
         await this.motivosRechazoRepository.save(motivoRechazo);
 
         loanRequest.motivos = [...(loanRequest.motivos || []), motivoRechazo];
+      }
+
+      if (updateLoanRequest.status === Status.Aprobado) {
+        loanRequest.status = Status.Aprobado;
+        loanRquestUser = this.loanRequestUserRepository.create({
+          user: { id: updateLoanRequest.userAdminId },
+          loanRequest,
+          fechaSolicitud: new Date(),
+        });
+        await this.loanRequestUserRepository.save(loanRquestUser);
+        await this.prestamoService.create(loanRequest);
       }
 
       return await this.loanRequestRepository.save(loanRequest);
@@ -155,5 +220,11 @@ export class SolicitudService {
       console.error(error);
       throw new BadRequestException('Error al actualizar la solicitud');
     }
+  }
+
+  async enviarSolicitud(id: number) {
+    return await this.loanRequestRepository.update(id, {
+      status: Status.Pendiente,
+    });
   }
 }

@@ -1,7 +1,18 @@
-import { IsInt, IsEnum, IsNumber, Min, IsNotEmpty } from 'class-validator';
+import {
+  IsInt,
+  IsEnum,
+  IsNumber,
+  Min,
+  IsNotEmpty,
+  IsOptional,
+} from 'class-validator';
 import { Frecuencia } from '../interfaces/solicitud-frecuencia.interface';
 
 export class CreateLoanRequestDto {
+  @IsInt()
+  @IsOptional()
+  id?: number;
+
   @IsInt()
   userId: number;
 

@@ -6,6 +6,7 @@ import {
   Column,
   ManyToOne,
   OneToOne,
+  OneToMany,
 } from 'typeorm';
 import { CurrencyType } from '../interfaces/moneyType.interface';
 import { AccountType } from '../interfaces/accountType.interface';
@@ -33,6 +34,6 @@ export class BankAccount {
   @ManyToOne(() => User, (user) => user.bankAccounts, { nullable: false })
   user: User;
 
-  @OneToOne(() => LoanRequest, (loan) => loan.bankAccount)
-  loan: LoanRequest;
+  @OneToMany(() => LoanRequest, (loan) => loan.bankAccount)
+  loan: LoanRequest[];
 }

@@ -42,4 +42,7 @@ export class Person {
   @OneToOne(() => PersonAddress, (personAddress) => personAddress.person)
   @JoinColumn({ referencedColumnName: 'id', name: 'personAddressId' })
   personAddress: PersonAddress;
+
+  @Column({ nullable: true })
+  telefono?: string;
 }

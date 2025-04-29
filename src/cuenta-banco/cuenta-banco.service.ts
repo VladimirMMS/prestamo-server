@@ -41,6 +41,7 @@ export class CuentaBancoService {
       },
       relations: ['user'],
     });
+
     if (!account) throw new NotFoundException('Bank account not found');
     return account;
   }
