@@ -62,6 +62,8 @@ export class AuthService {
       where: { cedula: signupDto.cedula },
     });
 
+    console.log(existingPerson);
+
     if (existingPerson) {
       throw new BadRequestException('La cedula ya está en uso');
     }
@@ -166,7 +168,7 @@ export class AuthService {
       email,
       password,
       person,
-      isActive: false,
+      isActive: true,
       role: ValidRoles.user,
       createdAt: new Date(),
       updatedAt: new Date(),

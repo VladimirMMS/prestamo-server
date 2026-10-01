@@ -84,4 +84,9 @@ export class PrestamoController {
   updateInterest(@Param('id', ParseIntPipe) id: number, @Body() body: any) {
     return this.prestamoService.updateInterest(id, body);
   }
+
+  @Get('activos/:userId')
+  getPrestamosActivos(@Param('userId', ParseIntPipe) userId: number) {
+    return this.prestamoService.getPrestamosActivos(userId);
+  }
 }

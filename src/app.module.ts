@@ -13,7 +13,6 @@ import { CuentaBancoModule } from './cuenta-banco/cuenta-banco.module';
 import { SolicitudModule } from './solicitud/solicitud.module';
 import { PrestamoModule } from './prestamo/prestamo.module';
 
-console.log(join(__dirname, '..', 'upload'))
 @Module({
   imports: [
     ConfigModule.forRoot({

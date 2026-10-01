@@ -10,7 +10,6 @@ import { PrestamoService } from 'src/prestamo/prestamo.service';
 import { LoanRequestUser } from './entities/solicitud-usuario.entity';
 import { Loan } from 'src/prestamo/entities/prestamo.entity';
 import { PaymentHistory } from 'src/prestamo/entities/historial.entity';
-import Stripe from 'stripe';
 
 @Injectable()
 export class SolicitudService {

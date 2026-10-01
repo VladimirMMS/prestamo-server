@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { LoanRequest } from 'src/solicitud/entities/solicitud.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThan, MoreThan, Repository } from 'typeorm';
@@ -345,8 +350,12 @@ export class PrestamoService {
     try {
       const loan = await this.loanRepository.findOne({
         where: { id: loanId },
-        relations: ['user', 'loanRequest'],
+        relations: ['user', 'loanRequest', 'paymentHistory'],
       });
+
+      if (!loan) {
+        throw new NotFoundException('Loan not found');
+      }
 
       // const payDay = new Date(loan.incomingPaymentDate);
       // if (payDay.getMonth() !== new Date().getMonth()) {
@@ -354,12 +363,9 @@ export class PrestamoService {
       // }
 
       if (amount > loan.remainingBalance) {
-        throw new Error('El monto excede el balance restante del préstamo');
+        throw new BadRequestException('El monto excede el balance restante del préstamo');
       }
 
-      if (!loan) {
-        throw new Error('Loan not found');
-      }
       const timestamp = Date.now();
       const filename = `receipt_${loan.id}_${timestamp}.pdf`;
       const fileUrl = this.generateFileUrl(filename);
@@ -433,7 +439,13 @@ export class PrestamoService {
       return newPayment;
     } catch (error) {
       console.error('Error adding payment:', error);
-      throw new Error('Error al agregar el pago');
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Error al agregar el pago');
     }
   }
 
@@ -762,5 +774,23 @@ export class PrestamoService {
   }
   private generateFileUrl(filename: string): string {
     return `http://localhost:3000/uploads/${filename}`;
+  }
+
+  async getPrestamosActivos(userId: number) {
+    const prestamos = await this.loanRepository.find({
+      where: {
+        user: { id: userId },
+        status: StatusPrestamo.ACTIVO,
+      },
+      relations: ['user', 'loanRequest'],
+    });
+
+    if (!prestamos.length) return [];
+
+    return prestamos.map((prestamo) => {
+      return {
+        correlativoId: `ID-${prestamo.id}`,
+      };
+    });
   }
 }

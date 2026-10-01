@@ -42,6 +42,9 @@ export class CreateLoanRequestDto {
   @Min(0)
   installmentAmount: number;
 
+  @IsNumber()
+  @Min(0)
+
   @IsNotEmpty({ message: 'El tipo de interés es obligatorio' })
   interestRate: number;
 }

@@ -40,8 +40,20 @@ export class UserService {
     return 'This action adds a new user';
   }
 
-  findAll() {
-    return `This action returns all user`;
+  async findAll() {
+    const users = await this.userRepository.find({
+      relations: {
+        person: true,
+      },
+    });
+    return users.map((user) => ({
+      id: user.id,
+      name: user.person.names,
+      email: user.email,
+      identification: user.person.cedula,
+      role: user.role,
+      isActive: user.isActive,
+    }));
   }
 
   async findOne(id: number) {
@@ -97,8 +109,8 @@ export class UserService {
       throw new Error('Failed to retrieve user information');
     }
   }
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    return await this.userRepository.update(id, updateUserDto);
   }
 
   remove(id: number) {

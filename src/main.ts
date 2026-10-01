@@ -7,9 +7,11 @@ async function bootstrap() {
 
   // Habilitar CORS para permitir peticiones desde el frontend
   app.enableCors({
-    origin: 'http://localhost:5173', // Reemplázalo con la URL de tu frontend
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: (origin, callback) => {
+      callback(null, origin); // acepta cualquier origen válido
+    },
     credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   });
 
   app.setGlobalPrefix('api');
